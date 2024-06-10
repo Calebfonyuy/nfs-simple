@@ -58,7 +58,7 @@ nfsLan.link_multiplexing = True
 # The NFS server.
 nfsServer = request.RawPC("snode")
 nfsServer.disk_image = params.osImage
-nfsServer.hardwareType = params.serverType
+nfsServer.hardware_type = params.serverType
 # Attach server to lan.
 iface0 = nfsServer.addInterface('interface-0', pg.IPv4Address('192.168.6.2','255.255.255.0'))
 nfsLan.addInterface(iface0)
@@ -71,7 +71,7 @@ nfsServer.addService(pg.Execute(shell="sh", command="sudo /bin/bash /local/repos
 # The NFS client, also attached to the NFS lan.
 nfsClient = request.RawPC("tnode")
 nfsClient.disk_image = params.osImage
-nfsClient.hardwareType = params.clientType
+nfsClient.hardware_type = params.clientType
 iface2 = nfsClient.addInterface('interface-1', pg.IPv4Address('192.168.6.3','255.255.255.0'))
 nfsLan.addInterface(iface2)
 # Initialization script for the clients
