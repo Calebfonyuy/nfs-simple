@@ -32,11 +32,11 @@ nfsDirectory  = "/nfs"
 
 # NFS Server Type (Source Server)
 pc.defineParameter("serverType", "Source Server Type",
-                   portal.ParameterType.STRING, "dl710")
+                   portal.ParameterType.STRING, "d710")
 
 # NFS Client Type (Target Server)
 pc.defineParameter("clientType", "Target Server Type",
-                   portal.ParameterType.STRING, "dl710")
+                   portal.ParameterType.STRING, "d710")
 
 pc.defineParameter("osImage", "Select OS image for servers",
                    portal.ParameterType.IMAGE,
@@ -56,7 +56,7 @@ nfsLan.vlan_tagging      = True
 nfsLan.link_multiplexing = True
 
 # The NFS server.
-nfsServer = request.RawPC("snode-%s" % params.serverType)
+nfsServer = request.RawPC("snode")
 nfsServer.disk_image = params.osImage
 nfsServer.hardwareType = params.serverType
 # Attach server to lan.
@@ -69,7 +69,7 @@ nfsBS.size = params.nfsSize
 nfsServer.addService(pg.Execute(shell="sh", command="sudo /bin/bash /local/repository/nfs-server.sh"))
 
 # The NFS client, also attached to the NFS lan.
-nfsClient = request.RawPC("tnode-%s" % params.clientType)
+nfsClient = request.RawPC("tnode")
 nfsClient.disk_image = params.osImage
 nfsClient.hardwareType = params.clientType
 iface2 = nfsClient.addInterface('interface-1', pg.IPv4Address('192.168.6.3','255.255.255.0'))
