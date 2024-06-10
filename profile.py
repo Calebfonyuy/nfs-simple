@@ -49,14 +49,6 @@ pc.defineParameter("nfsSize", "Size of NFS Storage",
 # Always need this when using parameters
 params = pc.bindParameters()
 
-# The NFS network. All these options are required.
-nfsLan = request.LAN(nfsLanName)
-# Must provide a bandwidth. BW is in Kbps
-nfsLan.bandwidth         = 100000
-nfsLan.best_effort       = True
-nfsLan.vlan_tagging      = True
-nfsLan.link_multiplexing = True
-
 # The NFS server.
 nfsServer = request.RawPC("snode")
 nfsServer.disk_image = params.osImage
@@ -64,7 +56,6 @@ nfsServer.hardware_type = params.serverType
 nfsServer.routable_control_ip = True
 # Attach server to lan.
 iface0 = nfsServer.addInterface('interface-0', pg.IPv4Address('192.168.6.2','255.255.255.0'))
-nfsLan.addInterface(iface0)
 # Storage file system goes into a local (ephemeral) blockstore.
 nfsBS = nfsServer.Blockstore("nfsBS", nfsDirectory)
 nfsBS.size = params.nfsSize
@@ -77,9 +68,19 @@ nfsClient.disk_image = params.osImage
 nfsClient.hardware_type = params.clientType
 nfsClient.routable_control_ip = True
 iface2 = nfsClient.addInterface('interface-1', pg.IPv4Address('192.168.6.3','255.255.255.0'))
-nfsLan.addInterface(iface2)
 # Initialization script for the clients
 nfsClient.addService(pg.Execute(shell="sh", command="sudo /bin/bash /local/repository/nfs-client.sh"))
+
+
+# The NFS network. All these options are required.
+nfsLan = request.LAN(nfsLanName)
+# Must provide a bandwidth. BW is in Kbps
+nfsLan.bandwidth         = 100000
+nfsLan.best_effort       = True
+nfsLan.vlan_tagging      = True
+nfsLan.link_multiplexing = True
+nfsLan.addInterface(iface0)
+nfsLan.addInterface(iface2)
 
 # Print the RSpec to the enclosing page.
 pc.printRequestRSpec(request)
