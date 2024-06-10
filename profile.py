@@ -21,20 +21,8 @@ request = pc.makeRequestRSpec()
 
 # Client image list
 imageList = [
+    ('urn:publicid:IDN+emulab.net+image+emulab-ops//UBUNTU22-64-STD', 'UBUNTU 22.04'),
     ('urn:publicid:IDN+emulab.net+image+emulab-ops//UBUNTU20-64-STD', 'UBUNTU 20.04'),
-    ('urn:publicid:IDN+emulab.net+image+emulab-ops//UBUNTU18-64-STD', 'UBUNTU 18.04'),
-    ('urn:publicid:IDN+emulab.net+image+emulab-ops//CENTOS8-64-STD', 'CENTOS 8'),
-    ('urn:publicid:IDN+emulab.net+image+emulab-ops//CENTOS7-64-STD', 'CENTOS 7'),
-    ('urn:publicid:IDN+emulab.net+image+emulab-ops//FBSD131-64-STD', 'FreeBSD 13.1'),
-    ('urn:publicid:IDN+emulab.net+image+emulab-ops//FBSD123-64-STD', 'FreeBSD 12.3'),
-]
-
-# Server image list, not tested with CentOS
-imageList2 = [
-    ('urn:publicid:IDN+emulab.net+image+emulab-ops//UBUNTU20-64-STD', 'UBUNTU 20.04'),
-    ('urn:publicid:IDN+emulab.net+image+emulab-ops//UBUNTU18-64-STD', 'UBUNTU 18.04'),
-    ('urn:publicid:IDN+emulab.net+image+emulab-ops//FBSD131-64-STD', 'FreeBSD 13.1'),
-    ('urn:publicid:IDN+emulab.net+image+emulab-ops//FBSD123-64-STD', 'FreeBSD 12.3'),
 ]
 
 # Do not change these unless you change the setup scripts too.
@@ -42,17 +30,17 @@ nfsServerName = "nfs"
 nfsLanName    = "nfsLan"
 nfsDirectory  = "/nfs"
 
-# Number of NFS clients (there is always a server)
-pc.defineParameter("clientCount", "Number of NFS clients",
-                   portal.ParameterType.INTEGER, 2)
+# NFS Server Type (Source Server)
+pc.defineParameter("serverType", "Source Server Type",
+                   portal.ParameterType.STRING, "dl710")
 
-pc.defineParameter("osImage", "Select OS image for clients",
+# NFS Client Type (Target Server)
+pc.defineParameter("clientType", "Target Server Type",
+                   portal.ParameterType.STRING, "dl710")
+
+pc.defineParameter("osImage", "Select OS image for servers",
                    portal.ParameterType.IMAGE,
                    imageList[0], imageList)
-
-pc.defineParameter("osServerImage", "Select OS image for server",
-                   portal.ParameterType.IMAGE,
-                   imageList2[0], imageList2)
 
 pc.defineParameter("nfsSize", "Size of NFS Storage",
                    portal.ParameterType.STRING, "200GB",
@@ -68,24 +56,26 @@ nfsLan.vlan_tagging      = True
 nfsLan.link_multiplexing = True
 
 # The NFS server.
-nfsServer = request.RawPC(nfsServerName)
-nfsServer.disk_image = params.osServerImage
+nfsServer = request.RawPC("node-%d" % params.serverType)
+nfsServer.disk_image = params.osImage
+nfsServer.hardwareType = params.serverType
 # Attach server to lan.
-nfsLan.addInterface(nfsServer.addInterface())
+iface0 = nfsServer.addInterface('interface-0', pg.IPv4Address('192.168.6.2','255.255.255.0'))
+nfsLan.addInterface(iface0)
 # Storage file system goes into a local (ephemeral) blockstore.
 nfsBS = nfsServer.Blockstore("nfsBS", nfsDirectory)
 nfsBS.size = params.nfsSize
 # Initialization script for the server
 nfsServer.addService(pg.Execute(shell="sh", command="sudo /bin/bash /local/repository/nfs-server.sh"))
 
-# The NFS clients, also attached to the NFS lan.
-for i in range(1, params.clientCount+1):
-    node = request.RawPC("node%d" % i)
-    node.disk_image = params.osImage
-    nfsLan.addInterface(node.addInterface())
-    # Initialization script for the clients
-    node.addService(pg.Execute(shell="sh", command="sudo /bin/bash /local/repository/nfs-client.sh"))
-    pass
+# The NFS client, also attached to the NFS lan.
+nfsClient = request.RawPC("node-%d" % params.clientType)
+nfsClient.disk_image = params.osImage
+nfsClient.hardwareType = params.clientType
+iface2 = nfsClient.addInterface('interface-0', pg.IPv4Address('192.168.6.3','255.255.255.0'))
+nfsLan.addInterface(iface2)
+# Initialization script for the clients
+nfsClient.addService(pg.Execute(shell="sh", command="sudo /bin/bash /local/repository/nfs-client.sh"))
 
 # Print the RSpec to the enclosing page.
 pc.printRequestRSpec(request)
