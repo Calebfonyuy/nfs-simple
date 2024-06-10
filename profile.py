@@ -72,7 +72,7 @@ nfsServer.addService(pg.Execute(shell="sh", command="sudo /bin/bash /local/repos
 nfsClient = request.RawPC("node-%s" % params.clientType)
 nfsClient.disk_image = params.osImage
 nfsClient.hardwareType = params.clientType
-iface2 = nfsClient.addInterface('interface-0', pg.IPv4Address('192.168.6.3','255.255.255.0'))
+iface2 = nfsClient.addInterface('interface-1', pg.IPv4Address('192.168.6.3','255.255.255.0'))
 nfsLan.addInterface(iface2)
 # Initialization script for the clients
 nfsClient.addService(pg.Execute(shell="sh", command="sudo /bin/bash /local/repository/nfs-client.sh"))
